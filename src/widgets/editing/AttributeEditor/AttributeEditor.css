@@ -1,0 +1,64 @@
+.attribute-editor-widget {
+  padding: 12px 15px;
+}
+
+.attribute-editor-widget fieldset {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.attribute-editor-widget label {
+  display: flex;
+  margin: 4px 0 2px;
+}
+
+.attribute-editor-widget input {
+  width: 100%;
+}
+
+.attribute-editor-widget input:invalid,
+.attribute-editor-widget select:invalid {
+  border-color: red;
+}
+
+.attribute-editor-widget input:disabled,
+.attribute-editor-widget select:disabled {
+  background-color: #f1f1f1;
+}
+
+.esri-input[type="date"] {
+  height: 32px;
+  padding: 0 0.5em;
+}
+
+.attribute-editor-widget .esri-widget--button {
+  width: auto;
+  padding: 0 8px;
+  background-color: #0079c1;
+  color: #fff;
+  border: none;
+  margin-top: 12px;
+}
+
+.attribute-editor-widget .esri-widget--button:disabled {
+  pointer-events: none;
+}
+
+.attribute-editor-widget .esri-widget--button:hover {
+  background-color: #42b8ff;
+}
+
+.attribute-editor-widget__message {
+  display: flex;
+}
+
+.attribute-editor-widget__message.success {
+  margin: 6px 0;
+  color: green;
+}
+
+.attribute-editor-widget__message.fail {
+  margin: 6px 0;
+  color: red;
+}
