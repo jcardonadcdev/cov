@@ -3,7 +3,7 @@ A package with widgets and helpers for use with [Esri's Javascript API](https://
 
 ## Usage
 
-Copy contents of `dist` directory to any location and let dojo know about it for use with [Esri's Javascript API](https://developers.arcgis.com/javascript/) CDN.
+Copy contents of `dist` directory to any location and let dojo know about it for use with the Esri JS CDN.
 
 ```javascript
 (function (window) {
@@ -20,7 +20,7 @@ Copy contents of `dist` directory to any location and let dojo know about it for
 }(this));
 ```
 
-
+Use the usual suspects for package management and builds.
 
 `i18n` supported. Additional languages can be added, or just change the `root` values.
 
