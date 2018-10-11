@@ -1,0 +1,70 @@
+.markup-widget {
+  padding: 12px 15px;
+}
+
+.markup-widget__title {
+  font-size: 16px;
+  font-weight: 600;
+  padding: 0 0 12px;
+  margin: 0 auto 0 0;
+}
+
+.markup-widget__tab-panel {
+  position: relative;
+  bottom: -1px;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  justify-content: space-between;
+}
+
+.markup-widget__tab {
+  display: inline-block;
+  text-align: center;
+  margin: 0;
+  padding: 5px 5px;
+  width: 100%;
+  cursor: pointer;
+  color: #6e6e6e;
+  border: 1px solid transparent;
+}
+
+.markup-widget__tab-content {
+  padding: 12px 0 0;
+  border-top: 1px solid rgba(50,50,50,0.25);
+}
+
+.markup-widget__tab:hover,
+.markup-widget__tab:focus {
+  color: #323232;
+  background-color: #ededed;
+  border-bottom: 1px solid rgba(50,50,50,0.25);
+}
+
+.markup-widget__tab[aria-selected="true"],
+.markup-widget__tab[aria-selected="true"]:hover {
+  background-color: #fff;
+  color: #323232;
+  border-color: rgba(50,50,50,0.25);
+  border-bottom-color: #fff;
+}
+
+.markup-widget__draw-message {
+  margin: 0 0 8px;
+}
+
+.markup-widget__button-group {
+  margin-bottom: 8px;
+}
+
+.markup-widget .esri-button {
+  display: inline-block;
+  display: inline-flex;
+  width: auto;
+  margin-right: 6px;
+}
+
+.markup-widget__label {
+  display: block;
+  padding: 4px 0 2px;
+}

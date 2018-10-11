@@ -21,7 +21,7 @@
     "preserveConstEnums": true,
     "suppressImplicitAnyIndexErrors": true,
     "strictNullChecks": true,
-    "outDir": "dist"
+    "outDir": "dev/cov"
   },
   "types": [
     "arcgis-js-api",
