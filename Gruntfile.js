@@ -46,7 +46,7 @@ module.exports = function (grunt) {
         files: [{
           expand: true,
           cwd: 'src',
-          src: ['**/*.css', 'put.js'],
+          src: ['**/*.css', '**/*.js', '!**/index.js'],
           dest: 'dist'
         }]
       },
@@ -54,7 +54,7 @@ module.exports = function (grunt) {
         files: [{
           expand: true,
           cwd: 'src',
-          src: ['**/*.css', 'put.js'],
+          src: ['**/*.css', '**/*.js', '!**/index.js'],
           dest: 'dev/cov'
         }]
       }

@@ -1,57 +1,37 @@
 .markup-widget {
-  padding: 12px 15px;
-}
+  padding: 12px 15px; }
 
 .markup-widget__title {
   font-size: 16px;
   font-weight: 600;
   padding: 0 0 12px;
-  margin: 0 auto 0 0;
-}
+  margin: 0 auto 0 0; }
 
-.markup-widget__pane {
-
-}
-
-.markup-widget__heading {
-  display: block;
-  margin: 0 0 6px;
-  font-size: 15px;
-}
+.markup-widget__draw-message {
+  margin: 0 0 8px; }
 
 .markup-widget__button-group {
-  margin-bottom: 8px;
-}
+  margin-bottom: 8px; }
 
 .markup-widget__button-group--separator {
   margin-top: 8px;
-  padding-top: 8px;
-  // border-top: 1px solid rgba(50,50,50,0.25);
-}
+  padding-top: 8px; }
 
 .markup-widget .esri-button {
   display: inline-block;
   display: inline-flex;
   width: auto;
-  margin-right: 6px;
-  vertical-align: top;
-}
+  margin-right: 6px; }
 
 .markup-widget__undo {
-  transform: rotate(180deg);
-}
+  transform: rotate(180deg); }
 
 .markup-widget__redo {
-  transform: scaleY(-1);
-}
+  transform: scaleY(-1); }
 
 .markup-widget__label {
   display: block;
-  padding: 4px 0 2px;
-}
-
-// popups
-.markup-symbol-styler {}
+  padding: 4px 0 2px; }
 
 .markup-symbol-styler__tab-panel {
   position: relative;
@@ -59,8 +39,7 @@
   padding: 0 !important;
   margin: 0 !important;
   display: flex;
-  justify-content: space-between;
-}
+  justify-content: space-between; }
 
 .markup-symbol-styler__tab {
   display: inline-block;
@@ -70,66 +49,56 @@
   width: 100%;
   cursor: pointer;
   color: #6e6e6e;
-  border: 1px solid transparent;
-}
+  border: 1px solid transparent; }
 
 .markup-symbol-styler__tab-content {
   padding: 12px 0 0;
-  border-top: 1px solid rgba(50,50,50,0.25);
-}
+  border-top: 1px solid rgba(50, 50, 50, 0.25); }
 
 .markup-symbol-styler__tab:hover,
 .markup-symbol-styler__tab:focus {
   color: #323232;
   background-color: #ededed;
-  border-bottom: 1px solid rgba(50,50,50,0.25);
-}
+  border-bottom: 1px solid rgba(50, 50, 50, 0.25); }
 
 .markup-symbol-styler__tab[aria-selected="true"],
 .markup-symbol-styler__tab[aria-selected="true"]:hover {
   background-color: #fff;
   color: #323232;
-  border-color: rgba(50,50,50,0.25);
-  border-bottom-color: #fff;
-}
+  border-color: rgba(50, 50, 50, 0.25);
+  border-bottom-color: #fff; }
 
 .markup-symbol-styler__left-pane {
   display: inline-block;
   width: 50%;
   vertical-align: top;
-  padding-right: 5px;
-}
+  padding-right: 5px; }
 
 .markup-symbol-styler__right-pane {
   display: inline-block;
   width: 50%;
   vertical-align: top;
-  padding-left: 5px;
-}
+  padding-left: 5px; }
 
 .markup-symbol-styler__label {
   display: block;
-  margin-bottom: 4px;
-}
+  margin-bottom: 4px; }
 
 .markup-symbol-styler .esri-input {
   width: 100%;
-  margin-bottom: 6px;
-}
+  margin-bottom: 6px; }
 
 .markup-symbol-styler .esri-select {
-  margin-bottom: 6px;
-}
+  margin-bottom: 6px; }
 
-.markup-symbol-styler .esri-color-picker {
-  .esri-container .esri-palette {
-    margin: 0 0 6px 0;
-  }
-  .esri-section {
-    width: 80%;
-    margin: 0;
-  }
-  .esri-label {
-    font-size: 14px;
-  }
-}
+.markup-symbol-styler .esri-color-picker .esri-container .esri-palette {
+  margin: 0 0 6px 0; }
+
+.markup-symbol-styler .esri-color-picker .esri-section {
+  width: 80%;
+  margin: 0; }
+
+.markup-symbol-styler .esri-color-picker .esri-label {
+  font-size: 14px; }
+
+/*# sourceMappingURL=Markup.css.map */

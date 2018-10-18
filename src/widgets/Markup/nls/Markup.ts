@@ -1,9 +1,11 @@
 export = {
   root: {
     title: 'Markup',
-    draw: 'Draw',
-    settings: 'Settings',
-    importExport: 'Import/Export',
+    geometry: {
+      point: 'point',
+      polyline: 'polyline',
+      polygon: 'polygon'
+    },
     drawMessages: {
       default: 'Select a draw tool',
       point: 'Click map to draw point'
@@ -13,8 +15,19 @@ export = {
       polyline: 'Draw polyline',
       polygon: 'Draw polygon',
       rectangle: 'Draw rectangle',
-      circle: 'Draw circle'
-    }
+      circle: 'Draw circle',
+      text: 'Add text',
+      undo: 'Undo',
+      redo: 'Redo',
+      zoomTo: 'Zoom to all',
+      deleteAll: 'Delete all',
+      settings: 'Settings',
+      done: 'Done',
+      export: 'Export'
+    },
+    locationLabel: 'Location unit',
+    lengthLabel: 'Length unit',
+    areaLabel: 'Area unit'
   },
   ar: 0,
   bs: 0,

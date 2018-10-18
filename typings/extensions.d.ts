@@ -8,3 +8,5 @@ declare module 'esri/moment' {
   import * as m from 'moment';
   export = m;
 }
+
+declare module '*';

@@ -8,7 +8,8 @@
     "url": "https://github.com/CityOfVernonia/cov.git"
   },
   "scripts": {
-    "build": "tsc --sourceMap"
+    "build": "tsc --sourceMap",
+    "make-libs": "browserify -s MarkupLibs src/widgets/Markup/libs/index.js > src/widgets/Markup/libs/MarkupLibs.js"
   },
   "dependencies": {
     "moment": "^2.22.2"
@@ -25,6 +26,11 @@
     "grunt-sass": "^3.0.1",
     "@types/arcgis-js-api": "^4.9.0",
     "@types/dojo": "*",
-    "typescript": "^3.1.1"
+    "@types/node": "*",
+    "@types/file-saver": "*",
+    "file-saver": "1.3.8",
+    "typescript": "^3.1.1",
+    "terraformer-arcgis-parser": "^1.0.5",
+    "browserify": "*"
   }
 }
