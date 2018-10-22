@@ -5,7 +5,7 @@ import { aliasOf, subclass, declared, property } from 'esri/core/accessorSupport
 
 import Widget = require('esri/widgets/Widget');
 
-import { renderable, tsx, storeNode } from 'esri/widgets/support/widget';
+import { tsx, storeNode } from 'esri/widgets/support/widget';
 
 import MapView = require('esri/views/MapView');
 // import SceneView = require('esri/views/SceneView');
@@ -35,8 +35,9 @@ import webMercatorUtils = require('esri/geometry/support/webMercatorUtils');
 import coordinateFormatter = require('esri/geometry/coordinateFormatter');
 
 import number = require('dojo/number');
+import on = require('dojo/on');
 
-import { TerraArcGIS, shpwrite, FileSaver } from './Markup/libs/MarkupLibs';
+import { TerraArcGIS, FileSaver } from './Markup/libs/MarkupLibs';
 
 import * as i18n from 'dojo/i18n!./Markup/nls/Markup';
 
@@ -230,15 +231,26 @@ class Markup extends declared(Widget) {
     // create and add layers to map
     this._layer = new GroupLayer({
       id: 'markup_widget_group_layer',
+      listMode: 'hide',
       layers: [
-        this._polygonLayer = new GraphicsLayer(),
-        this._polylineLayer = new GraphicsLayer(),
-        this._pointLayer = new GraphicsLayer(),
-        this._textLayer = new GraphicsLayer()
+        this._polygonLayer = new GraphicsLayer({
+          listMode: 'hide'
+        }),
+        this._polylineLayer = new GraphicsLayer({
+          listMode: 'hide'
+        }),
+        this._pointLayer = new GraphicsLayer({
+          listMode: 'hide'
+        }),
+        this._textLayer = new GraphicsLayer({
+          listMode: 'hide'
+        })
       ]
     })
     view.map.add(this._layer);
-    view.map.add(this._sketchLayer = new GraphicsLayer());
+    view.map.add(this._sketchLayer = new GraphicsLayer({
+      listMode: 'hide'
+    }));
     // init sketch view model
     this._sketch = new SketchViewModel({
       view,
@@ -275,7 +287,7 @@ class Markup extends declared(Widget) {
         <header class={CSS.header}>{i18n.title}</header>
         {/* default pane - active to start */}
         <section class={this.classes(CSS.pane, 'active')} bind={this} afterCreate={storeNode} data-node-ref="_defaultPane">
-          <span class={CSS.heading}>{i18n.headings.draw}</span>
+
           <div class={CSS.buttonGroup}>
             <button class={CSS.button} title={i18n.titles.point} bind={this} onclick={this.drawPoint}>
               <span class="esri-icon-map-pin"></span>
@@ -296,35 +308,39 @@ class Markup extends declared(Widget) {
               <span class="esri-icon-labels"></span>
             </button>
           </div>
-          <span class={CSS.heading}>{i18n.headings.edit}</span>
-          <div class={CSS.buttonGroup}>
-            <button class={CSS.button} title={i18n.titles.units} bind={this} onclick={this._showPane} data-pane="units">
-              {i18n.buttons.units}
-            </button>
-            <button class={CSS.button} title={i18n.titles.zoomTo} bind={this} onclick={this._zoomAll}>
-              <span class="esri-icon-zoom-out-fixed"></span>
-            </button>
-            <button class={CSS.button} title={i18n.titles.deleteAll} bind={this} onclick={this._deleteAll}>
-              <span class="esri-icon-trash"></span>
-            </button>
-          </div>
-          <span class={CSS.heading}>{i18n.headings.file}</span>
 
           <div class={CSS.buttonGroup}>
-            <button class={CSS.button} title="Save markup to file" bind={this} onclick={this._showPane} data-pane="save">
+            <button class={CSS.button} title={i18n.titles.zoomTo} bind={this} onclick={this._zoomAll}>
+              Zoom To All
+            </button>
+            <button class={CSS.button} title={i18n.titles.deleteAll} bind={this} onclick={this._deleteAll}>
+              Delete All
+            </button>
+            <button class={CSS.button} title={i18n.titles.units} bind={this} onclick={this._showPane} data-pane="units">
+              Units
+            </button>
+          </div>
+
+          <div class={CSS.buttonGroup}>
+            {/* <button class={CSS.button} title="Manage markup projects">
+              Projects
+            </button> */}
+            <button class={CSS.button} title="Save markup to file" bind={this} onclick={this._saveFile}>
               Save
             </button>
-            <button class={CSS.button} title="Open markup from file" bind={this} onclick={this._showPane} data-pane="open">
+            <input bind={this} afterCreate={storeNode} data-node-ref="_openFileInput" type="file" accept=".geojson" style="display:none !important;"/>
+            <button class={CSS.button} title="Open markup from file" bind={this} onclick={this._openFile}>
               Open
-            </button>
-            <button class={CSS.button} title="Manage markup projects">
-              Projects
             </button>
           </div>
         </section>
 
         {/* Units sections */}
         <section class={CSS.pane} bind={this} afterCreate={storeNode} data-node-ref="_unitsPane">
+          {/* <label class={CSS.label}>
+            <input class={CSS.input} type="checkbox" checked bind={this} afterCreate={storeNode} data-node-ref="_showUnits"/>
+            Show measurements when drawing
+          </label> */}
           <span class={CSS.label}>{i18n.locationLabel}</span>
           <select class={CSS.select} bind={this} onchange={this._setLocationUnit}>
             {this._createUnitOptions(this.locationUnits, this.locationUnit)}
@@ -343,41 +359,6 @@ class Markup extends declared(Widget) {
           </button>
         </section>
 
-        {/* export section */}
-        <section class={CSS.pane} bind={this} afterCreate={storeNode} data-node-ref="_savePane">
-          <form bind={this} onsubmit={this._saveFile}>
-            <span class={CSS.label}>Save format</span>
-            <select class={CSS.select} name="FORMAT">
-              <option value="geojson">GeoJSON</option>
-              <option value="shp">Shapefile (zipped)</option>
-            </select>
-            <button type="submit" class={CSS.button} title="Save file">
-              Save
-            </button>
-          </form>
-          <button class={CSS.button} title={i18n.buttons.done} bind={this} onclick={this._showPane} data-pane="default">
-            {i18n.buttons.done}
-          </button>
-        </section>
-
-        {/* import section */}
-        <section class={CSS.pane} bind={this} afterCreate={storeNode} data-node-ref="_openPane">
-          <form bind={this} onsubmit={this._openFile}>
-            <span class={CSS.label}>File</span>
-            <input type="file" accept=".geojson" name="FILE" required />
-            <label class={CSS.label}>
-              <input type="checkbox" name="CLEAR" checked />
-              Clear existing markup
-            </label>
-            <button type="submit" class={CSS.button} title="Open file">
-              Open
-            </button>
-          </form>
-          <button class={CSS.button} title={i18n.buttons.done} bind={this} onclick={this._showPane} data-pane="default">
-            {i18n.buttons.done}
-          </button>
-        </section>
-
       </div>
     );
   }
@@ -391,10 +372,6 @@ class Markup extends declared(Widget) {
   _defaultPane: HTMLElement;
   @property()
   _unitsPane: HTMLElement;
-  @property()
-  _savePane: HTMLElement;
-  @property()
-  _openPane: HTMLElement;
 
   private _showPane(evt: any): void {
     this._activePane = this._activePane || this._defaultPane;
@@ -429,7 +406,6 @@ class Markup extends declared(Widget) {
   private _setAreaUnit(evt: any): void {
     this.areaUnit = evt.target.value;
   }
-
 
   @property()
   _cursorTextGraphic: Graphic;
@@ -706,54 +682,63 @@ class Markup extends declared(Widget) {
 
   /* save and open files */
   private _saveFile(evt: any): void {
-    let geojson;
-    let file;
-    const format = evt.target.FORMAT.value;
+    let geojson = this._parseGeoJSON(false);
     evt.preventDefault();
-    switch (format) {
-      case 'geojson':
-        geojson = this._parseGeoJSON(true);
-        file = new Blob([geojson], {
-          type: 'text/plain;charset=utf-8'
-        });
-        FileSaver.saveAs(file, 'markup-export.geojson');
-        break;
-      case 'shp':
-        geojson = this._parseGeoJSON(false);
-        const zip = shpwrite.zip(
-          geojson,
-          {
-            folder: 'shapes',
-            types: {
-              point: 'points',
-              polygon: 'polygons',
-              line: 'lines'
-            }
-          }
-        );
-        file = new Blob([zip], {
-          type: 'application.zip'
-        });
-        FileSaver.saveAs(file, 'markup-export.zip');
-        break;
-      default:
-        break;
+    if (!geojson.features.length) {
+      return;
+    } else {
+      geojson = JSON.stringify(geojson);
     }
+    FileSaver.saveAs(
+      new Blob([
+        geojson
+      ], {
+        type: 'text/plain;charset=utf-8'
+      }),
+      'markup-export.geojson'
+    );
+
+    // how to save shp file
+    // geojson = this._parseGeoJSON(false);
+    // const zip = shpwrite.zip(
+    //   geojson,
+    //   {
+    //     folder: 'shapes',
+    //     types: {
+    //       point: 'points',
+    //       polygon: 'polygons',
+    //       line: 'lines'
+    //     }
+    //   }
+    // );
+    // file = new Blob([zip], {
+    //   type: 'application.zip'
+    // });
+    // FileSaver.saveAs(file, 'markup-export.zip');
   }
 
+
+  @property()
+  _openFileInput: HTMLInputElement;
+  @property()
+  _openFileInputHandle: any = null;
+
   private _openFile(evt: any): void {
-    const file = evt.target.FILE.files[0];
-    let type;
     evt.preventDefault();
-    if (!file) { return; }
-    type = file.name.match(/\.([0-9a-z]+)(?:[\?#]|$)/i)[1];
-    const reader = new FileReader();
-    if (type === 'geojson') {
-      reader.onload = (res: any) => {
-        this._addGeoJSON(JSON.parse(res.target.result), evt.target.CLEAR.checked);
-      };
-      reader.readAsText(file);
+    if (!this._openFileInputHandle) {
+      this._openFileInputHandle = on(this._openFileInput, 'change', (evt: any) => {
+        const file = evt.target.files[0];
+        if (!file) {
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (res: any) => {
+          this._addGeoJSON(JSON.parse(res.target.result), true);
+        };
+        reader.readAsText(file);
+      });
     }
+    this._openFileInput.click();
   }
 
   private _addGeoJSON(geojson: any, clear: boolean): void {
@@ -769,8 +754,8 @@ class Markup extends declared(Widget) {
         attributes,
         symbol
       });
-      const layer = this._isText ? this._textLayer : this['_' + geometry.type + 'Layer'];
       this._isText = symbol && symbol.type && (symbol.type === 'esriTS' || symbol.type === 'text');
+      const layer = this._isText ? this._textLayer : this['_' + geometry.type + 'Layer'];
       graphic.popupTemplate = this._createPopup(geometry.type, graphic);
       layer.add(graphic);
       this._isText = false;

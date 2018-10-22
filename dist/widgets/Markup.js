@@ -1,4 +1,4 @@
-define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/core/tsSupport/decorateHelper", "esri/core/accessorSupport/decorators", "esri/widgets/Widget", "esri/widgets/support/widget", "esri/widgets/Sketch/SketchViewModel", "esri/layers/GroupLayer", "esri/layers/GraphicsLayer", "esri/Graphic", "esri/PopupTemplate", "./Markup/TextStyler", "./Markup/PointStyler", "./Markup/PolylineStyler", "./Markup/PolygonStyler", "esri/symbols/support/jsonUtils", "esri/geometry/support/jsonUtils", "esri/geometry/Point", "esri/geometry/Polyline", "esri/geometry/Polygon", "esri/geometry/geometryEngine", "esri/geometry/support/webMercatorUtils", "esri/geometry/coordinateFormatter", "dojo/number", "./Markup/libs/MarkupLibs", "dojo/i18n!./Markup/nls/Markup"], function (require, exports, __extends, __decorate, decorators_1, Widget, widget_1, SketchViewModel, GroupLayer, GraphicsLayer, Graphic, PopupTemplate, TextStyler, PointStyler, PolylineStyler, PolygonStyler, symUtils, geomUtils, Point, Polyline, Polygon, geometryEngine, webMercatorUtils, coordinateFormatter, number, MarkupLibs_1, i18n) {
+define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/core/tsSupport/decorateHelper", "esri/core/accessorSupport/decorators", "esri/widgets/Widget", "esri/widgets/support/widget", "esri/widgets/Sketch/SketchViewModel", "esri/layers/GroupLayer", "esri/layers/GraphicsLayer", "esri/Graphic", "esri/PopupTemplate", "./Markup/TextStyler", "./Markup/PointStyler", "./Markup/PolylineStyler", "./Markup/PolygonStyler", "esri/symbols/support/jsonUtils", "esri/geometry/support/jsonUtils", "esri/geometry/Point", "esri/geometry/Polyline", "esri/geometry/Polygon", "esri/geometry/geometryEngine", "esri/geometry/support/webMercatorUtils", "esri/geometry/coordinateFormatter", "dojo/number", "dojo/on", "./Markup/libs/MarkupLibs", "dojo/i18n!./Markup/nls/Markup"], function (require, exports, __extends, __decorate, decorators_1, Widget, widget_1, SketchViewModel, GroupLayer, GraphicsLayer, Graphic, PopupTemplate, TextStyler, PointStyler, PolylineStyler, PolygonStyler, symUtils, geomUtils, Point, Polyline, Polygon, geometryEngine, webMercatorUtils, coordinateFormatter, number, on, MarkupLibs_1, i18n) {
     "use strict";
     var CSS = {
         base: 'markup-widget esri-widget esri-widget--panel',
@@ -116,6 +116,7 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
                     id: 'markup-widget-edit-delete',
                     className: 'esri-icon-trash'
                 }];
+            _this._openFileInputHandle = null;
             _this.watch('view', _this._initWidget.bind(_this));
             _this._coordFormat.load();
             console.log(_this);
@@ -125,15 +126,26 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
             var _this = this;
             this._layer = new GroupLayer({
                 id: 'markup_widget_group_layer',
+                listMode: 'hide',
                 layers: [
-                    this._polygonLayer = new GraphicsLayer(),
-                    this._polylineLayer = new GraphicsLayer(),
-                    this._pointLayer = new GraphicsLayer(),
-                    this._textLayer = new GraphicsLayer()
+                    this._polygonLayer = new GraphicsLayer({
+                        listMode: 'hide'
+                    }),
+                    this._polylineLayer = new GraphicsLayer({
+                        listMode: 'hide'
+                    }),
+                    this._pointLayer = new GraphicsLayer({
+                        listMode: 'hide'
+                    }),
+                    this._textLayer = new GraphicsLayer({
+                        listMode: 'hide'
+                    })
                 ]
             });
             view.map.add(this._layer);
-            view.map.add(this._sketchLayer = new GraphicsLayer());
+            view.map.add(this._sketchLayer = new GraphicsLayer({
+                listMode: 'hide'
+            }));
             this._sketch = new SketchViewModel({
                 view: view,
                 layer: this._sketchLayer
@@ -164,7 +176,6 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
             return (widget_1.tsx("div", { class: CSS.base },
                 widget_1.tsx("header", { class: CSS.header }, i18n.title),
                 widget_1.tsx("section", { class: this.classes(CSS.pane, 'active'), bind: this, afterCreate: widget_1.storeNode, "data-node-ref": "_defaultPane" },
-                    widget_1.tsx("span", { class: CSS.heading }, i18n.headings.draw),
                     widget_1.tsx("div", { class: CSS.buttonGroup },
                         widget_1.tsx("button", { class: CSS.button, title: i18n.titles.point, bind: this, onclick: this.drawPoint },
                             widget_1.tsx("span", { class: "esri-icon-map-pin" })),
@@ -178,18 +189,14 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
                             widget_1.tsx("span", { class: "esri-icon-radio-unchecked" })),
                         widget_1.tsx("button", { class: CSS.button, title: i18n.titles.text, bind: this, onclick: this.drawText },
                             widget_1.tsx("span", { class: "esri-icon-labels" }))),
-                    widget_1.tsx("span", { class: CSS.heading }, i18n.headings.edit),
                     widget_1.tsx("div", { class: CSS.buttonGroup },
-                        widget_1.tsx("button", { class: CSS.button, title: i18n.titles.units, bind: this, onclick: this._showPane, "data-pane": "units" }, i18n.buttons.units),
-                        widget_1.tsx("button", { class: CSS.button, title: i18n.titles.zoomTo, bind: this, onclick: this._zoomAll },
-                            widget_1.tsx("span", { class: "esri-icon-zoom-out-fixed" })),
-                        widget_1.tsx("button", { class: CSS.button, title: i18n.titles.deleteAll, bind: this, onclick: this._deleteAll },
-                            widget_1.tsx("span", { class: "esri-icon-trash" }))),
-                    widget_1.tsx("span", { class: CSS.heading }, i18n.headings.file),
+                        widget_1.tsx("button", { class: CSS.button, title: i18n.titles.zoomTo, bind: this, onclick: this._zoomAll }, "Zoom To All"),
+                        widget_1.tsx("button", { class: CSS.button, title: i18n.titles.deleteAll, bind: this, onclick: this._deleteAll }, "Delete All"),
+                        widget_1.tsx("button", { class: CSS.button, title: i18n.titles.units, bind: this, onclick: this._showPane, "data-pane": "units" }, "Units")),
                     widget_1.tsx("div", { class: CSS.buttonGroup },
-                        widget_1.tsx("button", { class: CSS.button, title: "Save markup to file", bind: this, onclick: this._showPane, "data-pane": "save" }, "Save"),
-                        widget_1.tsx("button", { class: CSS.button, title: "Open markup from file", bind: this, onclick: this._showPane, "data-pane": "open" }, "Open"),
-                        widget_1.tsx("button", { class: CSS.button, title: "Manage markup projects" }, "Projects"))),
+                        widget_1.tsx("button", { class: CSS.button, title: "Save markup to file", bind: this, onclick: this._saveFile }, "Save"),
+                        widget_1.tsx("input", { bind: this, afterCreate: widget_1.storeNode, "data-node-ref": "_openFileInput", type: "file", accept: ".geojson", style: "display:none !important;" }),
+                        widget_1.tsx("button", { class: CSS.button, title: "Open markup from file", bind: this, onclick: this._openFile }, "Open"))),
                 widget_1.tsx("section", { class: CSS.pane, bind: this, afterCreate: widget_1.storeNode, "data-node-ref": "_unitsPane" },
                     widget_1.tsx("span", { class: CSS.label }, i18n.locationLabel),
                     widget_1.tsx("select", { class: CSS.select, bind: this, onchange: this._setLocationUnit }, this._createUnitOptions(this.locationUnits, this.locationUnit)),
@@ -198,23 +205,6 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
                     widget_1.tsx("span", { class: CSS.label }, i18n.areaLabel),
                     widget_1.tsx("select", { class: CSS.select, bind: this, onchange: this._setAreaUnit }, this._createUnitOptions(this.areaUnits, this.areaUnit)),
                     widget_1.tsx("br", null),
-                    widget_1.tsx("button", { class: CSS.button, title: i18n.buttons.done, bind: this, onclick: this._showPane, "data-pane": "default" }, i18n.buttons.done)),
-                widget_1.tsx("section", { class: CSS.pane, bind: this, afterCreate: widget_1.storeNode, "data-node-ref": "_savePane" },
-                    widget_1.tsx("form", { bind: this, onsubmit: this._saveFile },
-                        widget_1.tsx("span", { class: CSS.label }, "Save format"),
-                        widget_1.tsx("select", { class: CSS.select, name: "FORMAT" },
-                            widget_1.tsx("option", { value: "geojson" }, "GeoJSON"),
-                            widget_1.tsx("option", { value: "shp" }, "Shapefile (zipped)")),
-                        widget_1.tsx("button", { type: "submit", class: CSS.button, title: "Save file" }, "Save")),
-                    widget_1.tsx("button", { class: CSS.button, title: i18n.buttons.done, bind: this, onclick: this._showPane, "data-pane": "default" }, i18n.buttons.done)),
-                widget_1.tsx("section", { class: CSS.pane, bind: this, afterCreate: widget_1.storeNode, "data-node-ref": "_openPane" },
-                    widget_1.tsx("form", { bind: this, onsubmit: this._openFile },
-                        widget_1.tsx("span", { class: CSS.label }, "File"),
-                        widget_1.tsx("input", { type: "file", accept: ".geojson", name: "FILE", required: true }),
-                        widget_1.tsx("label", { class: CSS.label },
-                            widget_1.tsx("input", { type: "checkbox", name: "CLEAR", checked: true }),
-                            "Clear existing markup"),
-                        widget_1.tsx("button", { type: "submit", class: CSS.button, title: "Open file" }, "Open")),
                     widget_1.tsx("button", { class: CSS.button, title: i18n.buttons.done, bind: this, onclick: this._showPane, "data-pane": "default" }, i18n.buttons.done))));
         };
         Markup.prototype._showPane = function (evt) {
@@ -456,53 +446,37 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
             });
         };
         Markup.prototype._saveFile = function (evt) {
-            var geojson;
-            var file;
-            var format = evt.target.FORMAT.value;
+            var geojson = this._parseGeoJSON(false);
             evt.preventDefault();
-            switch (format) {
-                case 'geojson':
-                    geojson = this._parseGeoJSON(true);
-                    file = new Blob([geojson], {
-                        type: 'text/plain;charset=utf-8'
-                    });
-                    MarkupLibs_1.FileSaver.saveAs(file, 'markup-export.geojson');
-                    break;
-                case 'shp':
-                    geojson = this._parseGeoJSON(false);
-                    var zip = MarkupLibs_1.shpwrite.zip(geojson, {
-                        folder: 'shapes',
-                        types: {
-                            point: 'points',
-                            polygon: 'polygons',
-                            line: 'lines'
-                        }
-                    });
-                    file = new Blob([zip], {
-                        type: 'application.zip'
-                    });
-                    MarkupLibs_1.FileSaver.saveAs(file, 'markup-export.zip');
-                    break;
-                default:
-                    break;
+            if (!geojson.features.length) {
+                return;
             }
+            else {
+                geojson = JSON.stringify(geojson);
+            }
+            MarkupLibs_1.FileSaver.saveAs(new Blob([
+                geojson
+            ], {
+                type: 'text/plain;charset=utf-8'
+            }), 'markup-export.geojson');
         };
         Markup.prototype._openFile = function (evt) {
             var _this = this;
-            var file = evt.target.FILE.files[0];
-            var type;
             evt.preventDefault();
-            if (!file) {
-                return;
+            if (!this._openFileInputHandle) {
+                this._openFileInputHandle = on(this._openFileInput, 'change', function (evt) {
+                    var file = evt.target.files[0];
+                    if (!file) {
+                        return;
+                    }
+                    var reader = new FileReader();
+                    reader.onload = function (res) {
+                        _this._addGeoJSON(JSON.parse(res.target.result), true);
+                    };
+                    reader.readAsText(file);
+                });
             }
-            type = file.name.match(/\.([0-9a-z]+)(?:[\?#]|$)/i)[1];
-            var reader = new FileReader();
-            if (type === 'geojson') {
-                reader.onload = function (res) {
-                    _this._addGeoJSON(JSON.parse(res.target.result), evt.target.CLEAR.checked);
-                };
-                reader.readAsText(file);
-            }
+            this._openFileInput.click();
         };
         Markup.prototype._addGeoJSON = function (geojson, clear) {
             var _this = this;
@@ -518,8 +492,8 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
                     attributes: attributes,
                     symbol: symbol
                 });
-                var layer = _this._isText ? _this._textLayer : _this['_' + geometry.type + 'Layer'];
                 _this._isText = symbol && symbol.type && (symbol.type === 'esriTS' || symbol.type === 'text');
+                var layer = _this._isText ? _this._textLayer : _this['_' + geometry.type + 'Layer'];
                 graphic.popupTemplate = _this._createPopup(geometry.type, graphic);
                 layer.add(graphic);
                 _this._isText = false;
@@ -622,12 +596,6 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
         ], Markup.prototype, "_unitsPane", void 0);
         __decorate([
             decorators_1.property()
-        ], Markup.prototype, "_savePane", void 0);
-        __decorate([
-            decorators_1.property()
-        ], Markup.prototype, "_openPane", void 0);
-        __decorate([
-            decorators_1.property()
         ], Markup.prototype, "_cursorTextGraphic", void 0);
         __decorate([
             decorators_1.property()
@@ -638,6 +606,12 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
         __decorate([
             decorators_1.property()
         ], Markup.prototype, "_editGraphic", void 0);
+        __decorate([
+            decorators_1.property()
+        ], Markup.prototype, "_openFileInput", void 0);
+        __decorate([
+            decorators_1.property()
+        ], Markup.prototype, "_openFileInputHandle", void 0);
         Markup = __decorate([
             decorators_1.subclass('Markup')
         ], Markup);

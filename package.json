@@ -8,7 +8,7 @@
     "url": "https://github.com/CityOfVernonia/cov.git"
   },
   "scripts": {
-    "build": "tsc --sourceMap",
+    "build": "tsc",
     "make-libs": "browserify -s MarkupLibs src/widgets/Markup/libs/index.js > src/widgets/Markup/libs/MarkupLibs.js"
   },
   "dependencies": {
