@@ -25,6 +25,8 @@ import PointStyler = require('./Markup/PointStyler');
 import PolylineStyler = require('./Markup/PolylineStyler');
 import PolygonStyler = require('./Markup/PolygonStyler');
 
+import symUtils = require('esri/symbols/support/jsonUtils');
+import geomUtils = require('esri/geometry/support/jsonUtils');
 import Point = require('esri/geometry/Point');
 import Polyline = require('esri/geometry/Polyline');
 import Polygon = require('esri/geometry/Polygon');
@@ -34,11 +36,26 @@ import coordinateFormatter = require('esri/geometry/coordinateFormatter');
 
 import number = require('dojo/number');
 
-import { ArcGIS, FileSaver } from './Markup/libs/MarkupLibs';
+import { TerraArcGIS, shpwrite, FileSaver } from './Markup/libs/MarkupLibs';
 
 import * as i18n from 'dojo/i18n!./Markup/nls/Markup';
 
 import esri = __esri;
+
+const CSS = {
+  base: 'markup-widget esri-widget esri-widget--panel',
+  header: 'markup-widget--title',
+  pane: 'markup-widget--pane',
+  activePane: 'active',
+  heading: 'markup-widget--heading',
+  label: 'markup-widget--label',
+  button: 'esri-button',
+  select: 'esri-select',
+  input: 'esri-input',
+  buttonGroup: 'markup-widget--button-group',
+  undoButton: 'markup-widget--undo',
+  redoButton: 'markup-widget--redo',
+};
 
 // widet properties
 interface MarkupProperties extends esri.WidgetProperties {
@@ -53,32 +70,11 @@ interface MarkupProperties extends esri.WidgetProperties {
   locationUnit?: string;
   lengthUnit?: string;
   areaUnit?: string;
+  // available units - i18n for units
+  locationUnits?: string;
+  lengthUnits?: string;
+  areaUnits?: string;
 }
-
-const CSS = {
-  base: 'markup-widget esri-widget esri-widget--panel',
-  header: 'markup-widget__title',
-  pane: 'markup-widget__pane',
-  heading: 'markup-widget__heading',
-  button: 'esri-button',
-  buttonGroup: 'markup-widget__button-group',
-  buttonGroupSeparator: 'markup-widget__button-group--separator',
-  pointButtonIcon: 'esri-icon-map-pin',
-  polylineButtonIcon: 'esri-icon-polyline',
-  polygonButtonIcon: 'esri-icon-polygon',
-  rectangleButtonIcon: 'esri-icon-checkbox-unchecked',
-  circleButtonIcon: 'esri-icon-radio-unchecked',
-  textButtonIcon: 'esri-icon-labels',
-  undoRedoButtonIcon: 'esri-icon-reply',
-  undoButton: 'markup-widget__undo',
-  redoButton: 'markup-widget__redo',
-  zoomToButtonIcon: 'esri-icon-zoom-out-fixed',
-  deleteButtonIcon: 'esri-icon-trash',
-  settingsButtonIcon: 'esri-icon-settings2',
-  exportButtonIcon: 'esri-icon-download',
-  label: 'markup-widget__label',
-  select: 'esri-select'
-};
 
 @subclass('Markup')
 class Markup extends declared(Widget) {
@@ -89,18 +85,14 @@ class Markup extends declared(Widget) {
   /* sketch model */
   @property()
   _sketch: SketchViewModel;
-
   @aliasOf('_sketch.draw')
   _draw: Draw;
-
-  @property()
-  _coordFormat: coordinateFormatter = coordinateFormatter;
 
   /* layers */
   // group layer containing all markup layers
   @property()
   _layer: GroupLayer;
-  // graphics layer for sketch
+  // graphics layer for sketch and temp graphics
   @property()
   _sketchLayer: GraphicsLayer;
   // text
@@ -116,7 +108,8 @@ class Markup extends declared(Widget) {
   @property()
   _polygonLayer: GraphicsLayer;
 
-  /* symbols */
+  /* default symbols */
+  // points
   @property()
   pointSymbol: any = {
     type: 'simple-marker',
@@ -128,7 +121,7 @@ class Markup extends declared(Widget) {
       width: 2
     }
   };
-
+  // polylines
   @property()
   polylineSymbol: any = {
     type: 'simple-line',
@@ -136,7 +129,7 @@ class Markup extends declared(Widget) {
     color: 'red',
     width: 2
   };
-
+  // polygons
   @property()
   polygonSymbol: any = {
     type: 'simple-fill',
@@ -147,7 +140,7 @@ class Markup extends declared(Widget) {
       width: 2
     }
   };
-
+  // text
   @property()
   textSymbol: any = {
     type: 'text',
@@ -163,7 +156,7 @@ class Markup extends declared(Widget) {
       weight: 'bold'
     }
   };
-
+  // cursor text
   @property()
   cursorTextSymbol: any = {
     type: 'text',
@@ -181,167 +174,209 @@ class Markup extends declared(Widget) {
     }
   };
 
+  /* default and available units */
+  // location
   @property()
-  dojoRequire: Function;
+  locationUnit: string = 'dec';
+  @property()
+  locationUnits: any = {
+    'dec': 'Decimal Degrees',
+    'dms': 'Degrees Minutes Seconds'
+  };
+  // length
+  @property()
+  lengthUnit: string = 'feet';
+  @property()
+  lengthUnits: any = {
+    'meters': 'Meters',
+    'feet': 'Feet',
+    'kilometers': 'Kilometers',
+    'miles': 'Miles',
+    'nautical-miles': 'Nautical Miles',
+    'yards': 'Yard'
+  };
+  // area
+  @property()
+  areaUnit: string = 'acres';
+  @property()
+  areaUnits: any = {
+    'acres': 'Acres',
+    'ares': 'Ares',
+    'hectares': 'Hectacres',
+    'square-feet': 'Square Feet',
+    'square-meters': 'Square Meters',
+    'square-yards': 'Square Yards',
+    'square-kilometers': 'Square Kilometers',
+    'square-miles': 'Square Miles'
+  };
+
+  /* coordinate formatter - loaded in constructor() */
+  @property()
+  _coordFormat: coordinateFormatter = coordinateFormatter;
 
   constructor(params: MarkupProperties) {
     super(params);
-    // when/if view loaded init layers, sketches and events
-    this.watch('view', view => {
-      // create and add layers to map
-      this._layer = new GroupLayer({
-        id: 'markup_widget_group_layer',
-        layers: [
-          this._polygonLayer = new GraphicsLayer(),
-          this._polylineLayer = new GraphicsLayer(),
-          this._pointLayer = new GraphicsLayer(),
-          this._textLayer = new GraphicsLayer(),
-          this._sketchLayer = new GraphicsLayer()
-        ]
-      })
-      view.map.add(this._layer);
-      // init sketch view model
-      this._sketch = new SketchViewModel({
-        view,
-        layer: this._sketchLayer
-      });
-
-      // wire up sketch view model events
-      this._sketch.on('create-complete', this._addGraphic.bind(this));
-      this._sketch.on('update-complete, update-cancel', this._updateGeometry.bind(this));
-      // wire up popup actions
-      view.popup.viewModel.on('trigger-action', (evt: any) => {
-        const graphic = view.popup.viewModel.selectedFeature;
-        switch (evt.action.id) {
-          case 'markup-widget-edit-delete':
-            this._deleteGraphic(graphic);
-            break;
-          case 'markup-widget-edit-geometry':
-            this._editGeometry(graphic);
-            break;
-          case 'markup-widget-edit-move-up':
-            this._moveUp(graphic);
-            break;
-          case 'markup-widget-edit-move-down':
-            this._moveDown(graphic);
-            break;
-          default:
-            break;
-        }
-      });
-
-      this._coordFormat.load();
-
-      this.dojoRequire = window['require'];
-    });
-
+    // if/when view loaded init layers, sketches and events
+    this.watch('view', this._initWidget.bind(this));
+    // load coordinate formatter
+    this._coordFormat.load();
     // dev
     console.log(this);
   }
 
-  postInitialize() {}
+  // postInitialize() {}
+
+  private _initWidget(view: MapView) {
+    // create and add layers to map
+    this._layer = new GroupLayer({
+      id: 'markup_widget_group_layer',
+      layers: [
+        this._polygonLayer = new GraphicsLayer(),
+        this._polylineLayer = new GraphicsLayer(),
+        this._pointLayer = new GraphicsLayer(),
+        this._textLayer = new GraphicsLayer()
+      ]
+    })
+    view.map.add(this._layer);
+    view.map.add(this._sketchLayer = new GraphicsLayer());
+    // init sketch view model
+    this._sketch = new SketchViewModel({
+      view,
+      layer: this._sketchLayer
+    });
+    // wire up sketch view model events
+    this._sketch.on('create-complete', this._addGraphic.bind(this));
+    this._sketch.on('update-complete, update-cancel', this._updateGeometry.bind(this));
+    // wire up popup actions
+    view.popup.viewModel.on('trigger-action', (evt: any) => {
+      const graphic = view.popup.viewModel.selectedFeature;
+      switch (evt.action.id) {
+        case 'markup-widget-edit-delete':
+          this._deleteGraphic(graphic);
+          break;
+        case 'markup-widget-edit-geometry':
+          this._editGeometry(graphic);
+          break;
+        case 'markup-widget-edit-move-up':
+          this._moveUp(graphic);
+          break;
+        case 'markup-widget-edit-move-down':
+          this._moveDown(graphic);
+          break;
+        default:
+          break;
+      }
+    });
+  }
 
   render() {
-
     return (
       <div class={CSS.base}>
         <header class={CSS.header}>{i18n.title}</header>
-        <section class={CSS.pane} bind={this} afterCreate={storeNode} data-node-ref="_defaultPane">
-          <span class={CSS.heading}>Draw Tools</span>
+        {/* default pane - active to start */}
+        <section class={this.classes(CSS.pane, 'active')} bind={this} afterCreate={storeNode} data-node-ref="_defaultPane">
+          <span class={CSS.heading}>{i18n.headings.draw}</span>
           <div class={CSS.buttonGroup}>
-            <button class={CSS.button} title={i18n.buttons.point} bind={this} onclick={this.drawPoint}>
-              <span class={CSS.pointButtonIcon}></span>
+            <button class={CSS.button} title={i18n.titles.point} bind={this} onclick={this.drawPoint}>
+              <span class="esri-icon-map-pin"></span>
             </button>
-            <button class={CSS.button} title={i18n.buttons.polyline} bind={this} onclick={this.drawPolyline}>
-              <span class={CSS.polylineButtonIcon}></span>
+            <button class={CSS.button} title={i18n.titles.polyline} bind={this} onclick={this.drawPolyline}>
+              <span class="esri-icon-polyline"></span>
             </button>
-            <button class={CSS.button} title={i18n.buttons.polygon} bind={this} onclick={this.drawPolygon}>
-              <span class={CSS.polygonButtonIcon}></span>
+            <button class={CSS.button} title={i18n.titles.polygon} bind={this} onclick={this.drawPolygon}>
+              <span class="esri-icon-polygon"></span>
             </button>
-            <button class={CSS.button} title={i18n.buttons.rectangle} bind={this} onclick={this.drawRectangle}>
-              <span class={CSS.rectangleButtonIcon}></span>
+            <button class={CSS.button} title={i18n.titles.rectangle} bind={this} onclick={this.drawRectangle}>
+              <span class="esri-icon-checkbox-unchecked"></span>
             </button>
-            <button class={CSS.button} title={i18n.buttons.circle} bind={this} onclick={this.drawCircle}>
-              <span class={CSS.circleButtonIcon}></span>
+            <button class={CSS.button} title={i18n.titles.circle} bind={this} onclick={this.drawCircle}>
+              <span class="esri-icon-radio-unchecked"></span>
             </button>
-            <button class={CSS.button} title={i18n.buttons.text} bind={this} onclick={this.drawText}>
-              <span class={CSS.textButtonIcon}></span>
+            <button class={CSS.button} title={i18n.titles.text} bind={this} onclick={this.drawText}>
+              <span class="esri-icon-labels"></span>
             </button>
           </div>
-
-          <span class={CSS.heading}>Edit</span>
-          <div class={this.classes(CSS.buttonGroup)}>
-
-            <button class={CSS.button} title={i18n.buttons.undo} bind={this}>
-              <span class={this.classes(CSS.undoRedoButtonIcon, CSS.undoButton)}></span>
+          <span class={CSS.heading}>{i18n.headings.edit}</span>
+          <div class={CSS.buttonGroup}>
+            <button class={CSS.button} title={i18n.titles.units} bind={this} onclick={this._showPane} data-pane="units">
+              {i18n.buttons.units}
             </button>
-            <button class={CSS.button} title={i18n.buttons.redo} bind={this}>
-              <span class={this.classes(CSS.undoRedoButtonIcon, CSS.redoButton)}></span>
+            <button class={CSS.button} title={i18n.titles.zoomTo} bind={this} onclick={this._zoomAll}>
+              <span class="esri-icon-zoom-out-fixed"></span>
             </button>
-            <button class={CSS.button} title={i18n.buttons.zoomTo} bind={this} onclick={this._zoomAll}>
-              <span class={CSS.zoomToButtonIcon}></span>
+            <button class={CSS.button} title={i18n.titles.deleteAll} bind={this} onclick={this._deleteAll}>
+              <span class="esri-icon-trash"></span>
             </button>
-            <button class={CSS.button} title={i18n.buttons.deleteAll} bind={this} onclick={this._deleteAll}>
-              <span class={CSS.deleteButtonIcon}></span>
-            </button>
-            <button class={CSS.button} title={i18n.buttons.settings} bind={this} onclick={this._showSettingsPane}>Units</button>
           </div>
-          <div class={this.classes(CSS.buttonGroup, CSS.buttonGroupSeparator)}>
-            <button class={CSS.button} title={i18n.buttons.export} bind={this} onclick={this._showExportPane}>
-              {/* <span class={CSS.exportButtonIcon}></span> */}
-              Import/Export
+          <span class={CSS.heading}>{i18n.headings.file}</span>
+
+          <div class={CSS.buttonGroup}>
+            <button class={CSS.button} title="Save markup to file" bind={this} onclick={this._showPane} data-pane="save">
+              Save
+            </button>
+            <button class={CSS.button} title="Open markup from file" bind={this} onclick={this._showPane} data-pane="open">
+              Open
+            </button>
+            <button class={CSS.button} title="Manage markup projects">
+              Projects
             </button>
           </div>
         </section>
 
-
-        <section class={CSS.pane} bind={this} afterCreate={storeNode} data-node-ref="_settingsPane" style="display:none;">
+        {/* Units sections */}
+        <section class={CSS.pane} bind={this} afterCreate={storeNode} data-node-ref="_unitsPane">
           <span class={CSS.label}>{i18n.locationLabel}</span>
           <select class={CSS.select} bind={this} onchange={this._setLocationUnit}>
-            {this._createUnitOptions(this._locationUnits, this.locationUnit)}
+            {this._createUnitOptions(this.locationUnits, this.locationUnit)}
           </select>
           <span class={CSS.label}>{i18n.lengthLabel}</span>
           <select class={CSS.select} bind={this} onchange={this._setLengthUnit}>
-            {this._createUnitOptions(this._lengthUnits, this.lengthUnit)}
+            {this._createUnitOptions(this.lengthUnits, this.lengthUnit)}
           </select>
           <span class={CSS.label}>{i18n.areaLabel}</span>
           <select class={CSS.select} bind={this} onchange={this._setAreaUnit}>
-            {this._createUnitOptions(this._areaUnits, this.areaUnit)}
+            {this._createUnitOptions(this.areaUnits, this.areaUnit)}
           </select>
           <br/>
-          <button class={CSS.button} title={i18n.buttons.done} bind={this} onclick={this._showDeafaultPane}>
+          <button class={CSS.button} title={i18n.buttons.done} bind={this} onclick={this._showPane} data-pane="default">
             {i18n.buttons.done}
           </button>
-
         </section>
 
-        <section class={CSS.pane} bind={this} afterCreate={storeNode} data-node-ref="_exportPane" style="display:none;">
-          <span class={CSS.heading}>Import</span>
-
-
-          <button class={CSS.button} title="Import">
-            Import
-          </button>
-
-          <span class={CSS.heading}>Export</span>
-          <span class={CSS.label}>Export Format</span>
-          <select class={CSS.select} bind={this} afterCreate={storeNode} data-node-ref="_exportFormatSelect">
-            <option value="geojson">GeoJSON</option>
-            <option value="shp">Shapefile</option>
-            <option value="kml">KML</option>
-          </select>
-          <br/>
-          <button class={CSS.button} title="Export" bind={this} onclick={this._export}>
-            Export
-          </button>
-
-          <button class={CSS.button} title={i18n.buttons.done} bind={this} onclick={this._showDeafaultPane}>
+        {/* export section */}
+        <section class={CSS.pane} bind={this} afterCreate={storeNode} data-node-ref="_savePane">
+          <form bind={this} onsubmit={this._saveFile}>
+            <span class={CSS.label}>Save format</span>
+            <select class={CSS.select} name="FORMAT">
+              <option value="geojson">GeoJSON</option>
+              <option value="shp">Shapefile (zipped)</option>
+            </select>
+            <button type="submit" class={CSS.button} title="Save file">
+              Save
+            </button>
+          </form>
+          <button class={CSS.button} title={i18n.buttons.done} bind={this} onclick={this._showPane} data-pane="default">
             {i18n.buttons.done}
           </button>
-
-
         </section>
 
+        {/* import section */}
+        <section class={CSS.pane} bind={this} afterCreate={storeNode} data-node-ref="_openPane">
+          <form bind={this} onsubmit={this._openFile}>
+            <span class={CSS.label}>File</span>
+            <input type="file" accept=".geojson" name="FILE" required />
+            <label class={CSS.label}>
+              <input type="checkbox" name="CLEAR" checked />
+              Clear existing markup
+            </label>
+            <button type="submit" class={CSS.button} title="Open file">
+              Open
+            </button>
+          </form>
+          <button class={CSS.button} title={i18n.buttons.done} bind={this} onclick={this._showPane} data-pane="default">
+            {i18n.buttons.done}
+          </button>
+        </section>
 
       </div>
     );
@@ -349,28 +384,25 @@ class Markup extends declared(Widget) {
 
   /* toggle panes */
   @property()
+  _panes: HTMLElement[];
+  @property()
+  _activePane: HTMLElement;
+  @property()
   _defaultPane: HTMLElement;
   @property()
-  _settingsPane: HTMLElement;
+  _unitsPane: HTMLElement;
   @property()
-  _exportPane: HTMLElement;
+  _savePane: HTMLElement;
+  @property()
+  _openPane: HTMLElement;
 
-  private _showDeafaultPane(): void {
-    this._settingsPane.style.display = 'none';
-    this._exportPane.style.display = 'none';
-    this._defaultPane.style.display = 'block';
-  }
-
-  private _showSettingsPane(): void {
-    this._defaultPane.style.display = 'none';
-    this._exportPane.style.display = 'none';
-    this._settingsPane.style.display = 'block';
-  }
-
-  private _showExportPane(): void {
-    this._defaultPane.style.display = 'none';
-    this._settingsPane.style.display = 'none';
-    this._exportPane.style.display = 'block';
+  private _showPane(evt: any): void {
+    this._activePane = this._activePane || this._defaultPane;
+    const pane = evt.target.getAttribute('data-pane');
+    const activePane = this['_' + pane + 'Pane'] as HTMLElement;
+    this._activePane.classList.remove('active');
+    activePane.classList.add('active');
+    this._activePane = activePane;
   }
 
   /* units and measuring */
@@ -398,42 +430,6 @@ class Markup extends declared(Widget) {
     this.areaUnit = evt.target.value;
   }
 
-  @property()
-  locationUnit: string = 'dec';
-
-  @property()
-  _locationUnits: any = {
-    'dec': 'Decimal Degrees',
-    'dms': 'Degrees Minutes Seconds'
-  };
-
-  @property()
-  lengthUnit: string = 'feet';
-
-  @property()
-  _lengthUnits: any = {
-    'meters': 'Meters',
-    'feet': 'Feet',
-    'kilometers': 'Kilometers',
-    'miles': 'Miles',
-    'nautical-miles': 'Nautical Miles',
-    'yards': 'Yard'
-  };
-
-  @property()
-  areaUnit: string = 'acres';
-
-  @property()
-  _areaUnits: any = {
-    'acres': 'Acres',
-    'ares': 'Ares',
-    'hectares': 'Hectacres',
-    'square-feet': 'Square Feet',
-    'square-meters': 'Square Meters',
-    'square-yards': 'Square Yards',
-    'square-kilometers': 'Square Kilometers',
-    'square-miles': 'Square Miles'
-  };
 
   @property()
   _cursorTextGraphic: Graphic;
@@ -632,16 +628,17 @@ class Markup extends declared(Widget) {
     // create graphic
     const graphic = new Graphic({
       geometry: evt.geometry,
+      attributes: {
+        OBJECTID: new Date().getTime()
+      },
       symbol: this._isText ? this.textSymbol : this[tool + 'Symbol']
     });
+    // layer
+    const layer = this._isText ? this._textLayer : this['_' + tool + 'Layer'];
     // add popup
     graphic.popupTemplate = this._createPopup(tool, graphic);
     // add to appropriate layer
-    if (this._isText) {
-      this._textLayer.add(graphic);
-    } else {
-      this['_' + tool + 'Layer'].add(graphic);
-    }
+    layer.add(graphic);
     this._isText = false;
   }
 
@@ -666,7 +663,8 @@ class Markup extends declared(Widget) {
   private _updateGeometry(graphic: Graphic): void {
     const updatedGraphic = new Graphic({
       geometry: graphic.geometry,
-      symbol: this._editGraphic.symbol,
+      attributes: this._editGraphic.attributes,
+      symbol: this._editGraphic.symbol
     });
     this['_' + graphic.geometry.type + 'Layer'].add(updatedGraphic);
     updatedGraphic.popupTemplate = this._createPopup(graphic.geometry.type, updatedGraphic);
@@ -706,67 +704,99 @@ class Markup extends declared(Widget) {
     });
   }
 
-  @property()
-  _exportFormatSelect: HTMLSelectElement;
-
-  private _export(): void {
-    switch (this._exportFormatSelect.value) {
+  /* save and open files */
+  private _saveFile(evt: any): void {
+    let geojson;
+    let file;
+    const format = evt.target.FORMAT.value;
+    evt.preventDefault();
+    switch (format) {
       case 'geojson':
-        this._exportGeoJSON();
+        geojson = this._parseGeoJSON(true);
+        file = new Blob([geojson], {
+          type: 'text/plain;charset=utf-8'
+        });
+        FileSaver.saveAs(file, 'markup-export.geojson');
+        break;
+      case 'shp':
+        geojson = this._parseGeoJSON(false);
+        const zip = shpwrite.zip(
+          geojson,
+          {
+            folder: 'shapes',
+            types: {
+              point: 'points',
+              polygon: 'polygons',
+              line: 'lines'
+            }
+          }
+        );
+        file = new Blob([zip], {
+          type: 'application.zip'
+        });
+        FileSaver.saveAs(file, 'markup-export.zip');
         break;
       default:
         break;
     }
   }
 
-  private _exportGeoJSON(): void {
-    const geojson = this._parseGeoJSON();
-
-    var file = new Blob([JSON.stringify(geojson)], {
-      type: 'text/plain;charset=utf-8'
-    });
-
-    FileSaver.saveAs(file, 'export.geojson');
+  private _openFile(evt: any): void {
+    const file = evt.target.FILE.files[0];
+    let type;
+    evt.preventDefault();
+    if (!file) { return; }
+    type = file.name.match(/\.([0-9a-z]+)(?:[\?#]|$)/i)[1];
+    const reader = new FileReader();
+    if (type === 'geojson') {
+      reader.onload = (res: any) => {
+        this._addGeoJSON(JSON.parse(res.target.result), evt.target.CLEAR.checked);
+      };
+      reader.readAsText(file);
+    }
   }
 
-  private _parseGeoJSON(): any {
+  private _addGeoJSON(geojson: any, clear: boolean): void {
+    if (clear) {
+      this._deleteAll();
+    }
+    geojson.features.forEach((feat: any) => {
+      const geometry = geomUtils.fromJSON(TerraArcGIS.convert(feat.geometry));
+      const attributes = feat.properties || {};
+      const symbol = feat.symbol ? symUtils.fromJSON(feat.symbol) : this['_' + geometry.type + 'Symbol'];
+      const graphic = new Graphic({
+        geometry,
+        attributes,
+        symbol
+      });
+      const layer = this._isText ? this._textLayer : this['_' + geometry.type + 'Layer'];
+      this._isText = symbol && symbol.type && (symbol.type === 'esriTS' || symbol.type === 'text');
+      graphic.popupTemplate = this._createPopup(geometry.type, graphic);
+      layer.add(graphic);
+      this._isText = false;
+    });
+  }
+
+  private _parseGeoJSON(stringify?: boolean): any {
     const geojson = {
       type: 'FeatureCollection',
       features: [] as any
     };
-    ['text', 'point', 'polyline', 'polygon'].forEach((lyr) => {
-      this['_' + lyr + 'Layer'].graphics.forEach((graphic: Graphic) => {
-        const feature = ArcGIS.parse(webMercatorUtils.webMercatorToGeographic(graphic.geometry));
-        feature.symbol = graphic.symbol.toJSON();
-        feature.properties = {};
-        geojson.features.push(feature);
+    this._layer.layers.forEach((layer: GraphicsLayer) => {
+      layer.graphics.forEach((graphic: Graphic) => {
+        const geometry = TerraArcGIS.parse(webMercatorUtils.webMercatorToGeographic(graphic.geometry));
+        const symbol = graphic.symbol.toJSON();
+        const properties = graphic.attributes || {}; //valid geojson must have `properties`
+        geojson.features.push({
+          type: 'Feature',
+          geometry,
+          properties,
+          symbol
+        });
       });
     });
-    return geojson;
+    return stringify === true ? JSON.stringify(geojson) : geojson;
   }
-
-  private _parseEsriJSON(): any {
-    const esrijson = {
-      features: [] as any
-    };
-    ['text', 'point', 'polyline', 'polygon'].forEach((lyr) => {
-      this['_' + lyr + 'Layer'].graphics.forEach((graphic: Graphic) => {
-        esrijson.features.push(graphic.toJSON());
-      });
-    });
-    return esrijson;
-  }
-
-  // loadTerraformer(callback: Function): void {
-  //   callback = callback || function(){};
-  //   this.dojoRequire(['cov/widgets/Markup/libs/terraArcGIS.js'], (function (terraArcGIS: any) {
-  //     this.terraArcGIS = terraArcGIS;
-  //     callback();
-  //   }).bind(this));
-  // }
-
-
-
 
 }
 

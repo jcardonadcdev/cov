@@ -1,6 +1,49 @@
 export = {
   root: {
-    title: 'Markup',
+    title: 'Markup', // widget title
+
+    // headings and tab titles
+    headings: {
+      draw: 'Draw',
+      edit: 'Edit',
+      export: 'Export',
+      import: 'Import',
+      file: 'File'
+    },
+
+    // titles for buttons, etc
+    titles: {
+      point: 'Draw point',
+      polyline: 'Draw polyline',
+      polygon: 'Draw polygon',
+      rectangle: 'Draw rectangle',
+      circle: 'Draw circle',
+      text: 'Add text',
+      undo: 'Undo',
+      redo: 'Redo',
+      zoomTo: 'Zoom to all markup',
+      deleteAll: 'Delete all markup',
+      units: 'Change units',
+      importExport: 'Save or open markup file'
+    },
+
+    // labels for inputs
+    labels: {
+      location: 'Location unit',
+      length: 'Length unit',
+      area: 'Area unit',
+      exportFormat: 'File format',
+      fileName: 'File name'
+    },
+
+    // text for buttons
+    buttons: {
+      units: 'Units',
+      done: 'Done',
+      importExport: 'Save or Open File'
+    },
+
+
     geometry: {
       point: 'point',
       polyline: 'polyline',
@@ -10,21 +53,7 @@ export = {
       default: 'Select a draw tool',
       point: 'Click map to draw point'
     },
-    buttons: {
-      point: 'Draw point',
-      polyline: 'Draw polyline',
-      polygon: 'Draw polygon',
-      rectangle: 'Draw rectangle',
-      circle: 'Draw circle',
-      text: 'Add text',
-      undo: 'Undo',
-      redo: 'Redo',
-      zoomTo: 'Zoom to all',
-      deleteAll: 'Delete all',
-      settings: 'Settings',
-      done: 'Done',
-      export: 'Export'
-    },
+
     locationLabel: 'Location unit',
     lengthLabel: 'Length unit',
     areaLabel: 'Area unit'

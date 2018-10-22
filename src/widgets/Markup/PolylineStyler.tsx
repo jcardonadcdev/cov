@@ -27,8 +27,8 @@ interface PolylineStylerProperties extends esri.WidgetProperties {
 
 const CSS = {
   base: 'markup-symbol-styler esri-widget',
-  left: 'markup-symbol-styler__left-pane',
-  right: 'markup-symbol-styler__right-pane',
+  left: 'markup-symbol-styler--left-pane',
+  right: 'markup-symbol-styler--right-pane',
   colorPicker: 'esri-color-picker',
   label: 'markup-symbol-styler__label',
   button: 'esri-button',

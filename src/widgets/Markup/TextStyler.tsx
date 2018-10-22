@@ -27,13 +27,13 @@ interface TextStylerProperties extends esri.WidgetProperties {
 
 const CSS = {
   base: 'markup-symbol-styler esri-widget',
-  tabPanel: 'markup-symbol-styler__tab-panel',
-  tab: 'markup-symbol-styler__tab',
-  tabContent: 'markup-symbol-styler__tab-content',
-  left: 'markup-symbol-styler__left-pane',
-  right: 'markup-symbol-styler__right-pane',
+  tabPanel: 'markup-symbol-styler--tab-panel',
+  tab: 'markup-symbol-styler--tab',
+  tabContent: 'markup-symbol-styler--tab-content',
+  left: 'markup-symbol-styler--left-pane',
+  right: 'markup-symbol-styler--right-pane',
   colorPicker: 'esri-color-picker',
-  label: 'markup-symbol-styler__label',
+  label: 'markup-symbol-styler--label',
   button: 'esri-button',
   select: 'esri-select',
   input: 'esri-input'
@@ -138,7 +138,7 @@ class TextStyler extends declared(Widget) {
   // styles
   private _textText(node: HTMLSelectElement): void {
     node.value = this.symbol.text;
-    on(node, 'change', (): void => {
+    on(node, 'keyup, change', (): void => {
       const newSym = this.symbol.clone();
       newSym.text = node.value || 'New Text';
       this.symbol = newSym;

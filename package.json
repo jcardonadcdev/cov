@@ -31,6 +31,8 @@
     "file-saver": "1.3.8",
     "typescript": "^3.1.1",
     "terraformer-arcgis-parser": "^1.0.5",
+    "shp-write": "^0.3.2",
+    "tokml": "https://github.com/COV-GIS/tokml.git#master",
     "browserify": "*"
   }
 }
