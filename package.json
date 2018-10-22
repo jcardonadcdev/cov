@@ -33,6 +33,7 @@
     "terraformer-arcgis-parser": "^1.0.5",
     "shp-write": "^0.3.2",
     "tokml": "https://github.com/COV-GIS/tokml.git#master",
-    "browserify": "*"
+    "browserify": "*",
+    "uglify-js": ">=2.6.0"
   }
 }
