@@ -2,8 +2,8 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
     "use strict";
     var CSS = {
         base: 'markup-symbol-styler esri-widget',
-        left: 'markup-symbol-styler__left-pane',
-        right: 'markup-symbol-styler__right-pane',
+        left: 'markup-symbol-styler--left-pane',
+        right: 'markup-symbol-styler--right-pane',
         colorPicker: 'esri-color-picker',
         label: 'markup-symbol-styler__label',
         button: 'esri-button',

@@ -2,13 +2,13 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
     "use strict";
     var CSS = {
         base: 'markup-symbol-styler esri-widget',
-        tabPanel: 'markup-symbol-styler__tab-panel',
-        tab: 'markup-symbol-styler__tab',
-        tabContent: 'markup-symbol-styler__tab-content',
-        left: 'markup-symbol-styler__left-pane',
-        right: 'markup-symbol-styler__right-pane',
+        tabPanel: 'markup-symbol-styler--tab-panel',
+        tab: 'markup-symbol-styler--tab',
+        tabContent: 'markup-symbol-styler--tab-content',
+        left: 'markup-symbol-styler--left-pane',
+        right: 'markup-symbol-styler--right-pane',
         colorPicker: 'esri-color-picker',
-        label: 'markup-symbol-styler__label',
+        label: 'markup-symbol-styler--label',
         button: 'esri-button',
         select: 'esri-select',
         input: 'esri-input'
@@ -65,7 +65,7 @@ define(["require", "exports", "esri/core/tsSupport/declareExtendsHelper", "esri/
         TextStyler.prototype._textText = function (node) {
             var _this = this;
             node.value = this.symbol.text;
-            on(node, 'change', function () {
+            on(node, 'keyup, change', function () {
                 var newSym = _this.symbol.clone();
                 newSym.text = node.value || 'New Text';
                 _this.symbol = newSym;

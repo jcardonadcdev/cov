@@ -3,16 +3,14 @@ define(["require", "exports"], function (require, exports) {
     return {
         root: {
             title: 'Markup',
-            geometry: {
-                point: 'point',
-                polyline: 'polyline',
-                polygon: 'polygon'
+            headings: {
+                draw: 'Draw',
+                edit: 'Edit',
+                export: 'Export',
+                import: 'Import',
+                file: 'File'
             },
-            drawMessages: {
-                default: 'Select a draw tool',
-                point: 'Click map to draw point'
-            },
-            buttons: {
+            titles: {
                 point: 'Draw point',
                 polyline: 'Draw polyline',
                 polygon: 'Draw polygon',
@@ -21,11 +19,31 @@ define(["require", "exports"], function (require, exports) {
                 text: 'Add text',
                 undo: 'Undo',
                 redo: 'Redo',
-                zoomTo: 'Zoom to all',
-                deleteAll: 'Delete all',
-                settings: 'Settings',
+                zoomTo: 'Zoom to all markup',
+                deleteAll: 'Delete all markup',
+                units: 'Change units',
+                importExport: 'Save or open markup file'
+            },
+            labels: {
+                location: 'Location unit',
+                length: 'Length unit',
+                area: 'Area unit',
+                exportFormat: 'File format',
+                fileName: 'File name'
+            },
+            buttons: {
+                units: 'Units',
                 done: 'Done',
-                export: 'Export'
+                importExport: 'Save or Open File'
+            },
+            geometry: {
+                point: 'point',
+                polyline: 'polyline',
+                polygon: 'polygon'
+            },
+            drawMessages: {
+                default: 'Select a draw tool',
+                point: 'Click map to draw point'
             },
             locationLabel: 'Location unit',
             lengthLabel: 'Length unit',

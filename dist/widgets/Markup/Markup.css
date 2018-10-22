@@ -1,39 +1,44 @@
 .markup-widget {
   padding: 12px 15px; }
 
-.markup-widget__title {
+.markup-widget--title {
   font-size: 16px;
   font-weight: 600;
   padding: 0 0 12px;
   margin: 0 auto 0 0; }
 
-.markup-widget__draw-message {
-  margin: 0 0 8px; }
+.markup-widget--pane {
+  display: none; }
+  .markup-widget--pane.active {
+    display: block; }
 
-.markup-widget__button-group {
-  margin-bottom: 8px; }
-
-.markup-widget__button-group--separator {
-  margin-top: 8px;
-  padding-top: 8px; }
-
-.markup-widget .esri-button {
-  display: inline-block;
-  display: inline-flex;
-  width: auto;
-  margin-right: 6px; }
-
-.markup-widget__undo {
-  transform: rotate(180deg); }
-
-.markup-widget__redo {
-  transform: scaleY(-1); }
-
-.markup-widget__label {
+.markup-widget--heading {
   display: block;
-  padding: 4px 0 2px; }
+  margin-bottom: 6px;
+  font-size: 15px; }
 
-.markup-symbol-styler__tab-panel {
+.markup-widget--button-group {
+  margin-bottom: 8px; }
+  .markup-widget--button-group .esri-button {
+    display: inline-block;
+    display: inline-flex;
+    width: auto;
+    margin-right: 6px;
+    vertical-align: top; }
+
+.markup-widget--label {
+  display: block;
+  padding: 6px 0 2px; }
+
+.markup-widget form {
+  margin-bottom: 16px; }
+  .markup-widget form .esri-button {
+    width: auto;
+    margin-top: 12px; }
+  .markup-widget form .esri-input {
+    width: 100%; }
+
+.markup-symbol-styler--tab-panel {
   position: relative;
   bottom: -1px;
   padding: 0 !important;
@@ -41,7 +46,7 @@
   display: flex;
   justify-content: space-between; }
 
-.markup-symbol-styler__tab {
+.markup-symbol-styler--tab {
   display: inline-block;
   text-align: center;
   margin: 0 !important;
@@ -51,36 +56,36 @@
   color: #6e6e6e;
   border: 1px solid transparent; }
 
-.markup-symbol-styler__tab-content {
+.markup-symbol-styler--tab-content {
   padding: 12px 0 0;
   border-top: 1px solid rgba(50, 50, 50, 0.25); }
 
-.markup-symbol-styler__tab:hover,
-.markup-symbol-styler__tab:focus {
+.markup-symbol-styler--tab:hover,
+.markup-symbol-styler--tab:focus {
   color: #323232;
   background-color: #ededed;
   border-bottom: 1px solid rgba(50, 50, 50, 0.25); }
 
-.markup-symbol-styler__tab[aria-selected="true"],
-.markup-symbol-styler__tab[aria-selected="true"]:hover {
+.markup-symbol-styler--tab[aria-selected="true"],
+.markup-symbol-styler--tab[aria-selected="true"]:hover {
   background-color: #fff;
   color: #323232;
   border-color: rgba(50, 50, 50, 0.25);
   border-bottom-color: #fff; }
 
-.markup-symbol-styler__left-pane {
+.markup-symbol-styler--left-pane {
   display: inline-block;
   width: 50%;
   vertical-align: top;
   padding-right: 5px; }
 
-.markup-symbol-styler__right-pane {
+.markup-symbol-styler--right-pane {
   display: inline-block;
   width: 50%;
   vertical-align: top;
   padding-left: 5px; }
 
-.markup-symbol-styler__label {
+.markup-symbol-styler--label {
   display: block;
   margin-bottom: 4px; }
 
